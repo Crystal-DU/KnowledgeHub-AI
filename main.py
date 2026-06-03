@@ -23,21 +23,42 @@ def load_all_documents(folder_path):
 
         if filename.endswith(".pdf"):
             for page_data in content:
-                documents.append(
-                    {
-                        "text": page_data["text"],
-                        "source": filename,
-                        "page": page_data["page"]
-                    }
-                )
-        else:
-            documents.append(
-                {
-                    "text": content,
+                documents.append({
+                    "text": page_data["text"],
                     "source": filename,
-                    "page": None
-                }
-            )
+                    "page": page_data["page"],
+                    "sheet": None,
+                    "slide": None
+                })
+
+        elif filename.endswith(".xlsx"):
+            for sheet_data in content:
+                documents.append({
+                    "text": sheet_data["text"],
+                    "source": filename,
+                    "page": None,
+                    "sheet": sheet_data["sheet"],
+                    "slide": None
+                })
+
+        elif filename.endswith(".pptx"):
+            for slide_data in content:
+                documents.append({
+                    "text": slide_data["text"],
+                    "source": filename,
+                    "page": None,
+                    "sheet": None,
+                    "slide": slide_data["slide"]
+                })
+
+        elif filename.endswith(".txt"):
+            documents.append({
+                "text": content,
+                "source": filename,
+                "page": None,
+                "sheet": None,
+                "slide": None
+            })
 
     return documents
 
@@ -59,30 +80,46 @@ def load_pdf(path):
 
 def load_excel(path):
     workbook = load_workbook(path, data_only=True)
-    text = ""
+    sheets = []
 
     for sheet in workbook.worksheets:
-        text += f"\nSheet: {sheet.title}\n"
+        text = ""
 
         for row in sheet.iter_rows(values_only=True):
             row_text = " ".join([str(cell) for cell in row if cell is not None])
             if row_text:
                 text += row_text + "\n"
 
-    return text
+        if text:
+            sheets.append(
+                {
+                    "text": text,
+                    "sheet": sheet.title
+                }
+            )
+
+    return sheets
 
 def load_ppt(path):
     presentation = Presentation(path)
-    text = ""
+    slides = []
 
     for i, slide in enumerate(presentation.slides):
-        text += f"\nSlide {i + 1}\n"
+        text = ""
 
         for shape in slide.shapes:
             if hasattr(shape, "text"):
                 text += shape.text + "\n"
 
-    return text
+        if text:
+            slides.append(
+                {
+                    "text": text,
+                    "slide": i + 1
+                }
+            )
+
+    return slides
 
 def load_txt(path):
     with open(path, "r", encoding="utf-8") as file:
@@ -170,21 +207,24 @@ def build_vector_db(chunks):
         chunk_text = chunk_data["text"]
         source_name = chunk_data["source"]
         page_number = chunk_data["page"]
+        sheet_name = chunk_data["sheet"]
+        slide_number = chunk_data["slide"]
 
         embedding = get_embedding(chunk_text)
+        metadata = {"source": source_name}
+        if page_number is not None:
+            metadata["page"] = page_number
+        if sheet_name is not None:
+            metadata["sheet"] = sheet_name
+        if slide_number is not None:
+            metadata["slide"] = slide_number
 
         collection.add(
             ids=[str(i)],
             embeddings=[embedding],
             documents=[chunk_text],
-            metadatas=[
-                {
-                    "source": source_name,
-                    "page": page_number
-                }
-            ]
+            metadatas=[metadata]
         )
-
     return collection
 
 #从数据库中检索与查询最相关的文本块
@@ -235,7 +275,9 @@ for doc in documents:
             {
                 "text": chunk,
                 "source": doc["source"],
-                "page": doc["page"]
+                "page": doc["page"],
+                "sheet": doc["sheet"],
+                "slide": doc["slide"]
             }
         )
 
@@ -255,10 +297,20 @@ print(answer)
 print("\n===== Sources =====")
 
 for i, metadata in enumerate(top_metadatas):
+
     source = metadata["source"]
     page = metadata.get("page")
+    sheet = metadata.get("sheet")
+    slide = metadata.get("slide")
 
     if page:
         print(f"[{i+1}] {source} - Page {page}")
+
+    elif sheet:
+        print(f"[{i+1}] {source} - Sheet: {sheet}")
+
+    elif slide:
+        print(f"[{i+1}] {source} - Slide {slide}")
+
     else:
         print(f"[{i+1}] {source}")
