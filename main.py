@@ -1,11 +1,12 @@
 import os
 import requests
-import math
+"""import math"""
 import chromadb
 from pypdf import PdfReader
 from openpyxl import load_workbook
 from pptx import Presentation
 
+#从文档文件夹中加载所有文本
 def load_all_documents(folder_path):
     all_text = ""
 
@@ -46,7 +47,6 @@ def load_excel(path):
 
     return text
 
-
 def load_ppt(path):
     presentation = Presentation(path)
     text = ""
@@ -60,12 +60,10 @@ def load_ppt(path):
 
     return text
 
-
 def load_txt(path):
     with open(path, "r", encoding="utf-8") as file:
         return file.read()
 
-#从文档文件中提取文本
 def load_document(path):
     if path.endswith(".pdf"):
         return load_pdf(path)
@@ -93,11 +91,57 @@ def split_text(text):
 
     return chunks
 
+##获取文本的向量表示
+def get_embedding(text):
+    response = requests.post(
+        "http://localhost:11434/api/embeddings",
+        json={
+            "model": "nomic-embed-text",
+            "prompt": text
+        }
+    )
+
+    data = response.json()
+    return data["embedding"]
+
+"""
+======================
+
+Legacy Retrieval
+(Manual Similarity Search)
+
+保留学习用途
+
+======================
+
+##计算两个向量之间的余弦相似度
+def cosine_similarity(v1, v2):
+    dot_product = sum(a * b for a, b in zip(v1, v2))
+    magnitude1 = math.sqrt(sum(a * a for a in v1))
+    magnitude2 = math.sqrt(sum(b * b for b in v2))
+
+    return dot_product / (magnitude1 * magnitude2)
+
+##查找与查询最相关的文本块
+def retrieve_best_chunk(query, chunks):
+    query_embedding = get_embedding(query)
+    scores = []
+
+    for chunk in chunks:
+        chunk_embedding = get_embedding(chunk)
+        similarity = cosine_similarity(query_embedding, chunk_embedding)
+        scores.append((similarity, chunk))
+
+    scores.sort(reverse=True)
+    return scores[0][1]
+
+"""
+
 #构建向量数据库以便更高效地检索相关文本块
 def build_vector_db(chunks):
     client = chromadb.Client()
 
-    collection = client.create_collection(name="knowledgehub")
+    collection = client.get_or_create_collection(name="knowledgehub")
 
     for i, chunk in enumerate(chunks):
         embedding = get_embedding(chunk)
