@@ -16,25 +16,46 @@ def load_all_documents(folder_path):
         if filename.startswith("."):
             continue
 
-        if filename.endswith((".pdf", ".xlsx", ".pptx", ".txt")):
+        if not filename.endswith((".pdf", ".xlsx", ".pptx", ".txt")):
+            continue
 
-            text = load_document(path)
+        content = load_document(path)
+
+        if filename.endswith(".pdf"):
+            for page_data in content:
+                documents.append(
+                    {
+                        "text": page_data["text"],
+                        "source": filename,
+                        "page": page_data["page"]
+                    }
+                )
+        else:
             documents.append(
                 {
-                    "text": text,
-                    "source": filename
+                    "text": content,
+                    "source": filename,
+                    "page": None
                 }
             )
+
     return documents
 
 def load_pdf(path):
     reader = PdfReader(path)
-    text = ""
+    pages = []
 
-    for page in reader.pages:
-        text += page.extract_text() + "\n"
+    for i, page in enumerate(reader.pages):
+        text = page.extract_text()
+        if text:
+            pages.append(
+                {
+                    "text": text,
+                    "page": i + 1
+                }
+            )
 
-    return text
+    return pages
 
 def load_excel(path):
     workbook = load_workbook(path, data_only=True)
@@ -148,6 +169,7 @@ def build_vector_db(chunks):
     for i, chunk_data in enumerate(chunks):
         chunk_text = chunk_data["text"]
         source_name = chunk_data["source"]
+        page_number = chunk_data["page"]
 
         embedding = get_embedding(chunk_text)
 
@@ -157,7 +179,8 @@ def build_vector_db(chunks):
             documents=[chunk_text],
             metadatas=[
                 {
-                    "source": source_name
+                    "source": source_name,
+                    "page": page_number
                 }
             ]
         )
@@ -211,7 +234,8 @@ for doc in documents:
         all_chunks.append(
             {
                 "text": chunk,
-                "source": doc["source"]
+                "source": doc["source"],
+                "page": doc["page"]
             }
         )
 
@@ -231,4 +255,10 @@ print(answer)
 print("\n===== Sources =====")
 
 for i, metadata in enumerate(top_metadatas):
-    print(f"[{i+1}] {metadata['source']}")
+    source = metadata["source"]
+    page = metadata.get("page")
+
+    if page:
+        print(f"[{i+1}] {source} - Page {page}")
+    else:
+        print(f"[{i+1}] {source}")
