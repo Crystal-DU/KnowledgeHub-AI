@@ -8,7 +8,7 @@ from pptx import Presentation
 
 #从文档文件夹中加载所有文本
 def load_all_documents(folder_path):
-    all_text = ""
+    documents = []
 
     for filename in os.listdir(folder_path):
         path = os.path.join(folder_path, filename)
@@ -17,12 +17,15 @@ def load_all_documents(folder_path):
             continue
 
         if filename.endswith((".pdf", ".xlsx", ".pptx", ".txt")):
-            print(f"Loading: {filename}")
-            text = load_document(path)
-            all_text += f"\n\n===== File: {filename} =====\n"
-            all_text += text
 
-    return all_text
+            text = load_document(path)
+            documents.append(
+                {
+                    "text": text,
+                    "source": filename
+                }
+            )
+    return documents
 
 def load_pdf(path):
     reader = PdfReader(path)
@@ -140,16 +143,23 @@ def retrieve_best_chunk(query, chunks):
 #构建向量数据库以便更高效地检索相关文本块
 def build_vector_db(chunks):
     client = chromadb.Client()
-
     collection = client.get_or_create_collection(name="knowledgehub")
 
-    for i, chunk in enumerate(chunks):
-        embedding = get_embedding(chunk)
+    for i, chunk_data in enumerate(chunks):
+        chunk_text = chunk_data["text"]
+        source_name = chunk_data["source"]
+
+        embedding = get_embedding(chunk_text)
 
         collection.add(
             ids=[str(i)],
             embeddings=[embedding],
-            documents=[chunk]
+            documents=[chunk_text],
+            metadatas=[
+                {
+                    "source": source_name
+                }
+            ]
         )
 
     return collection
@@ -163,7 +173,7 @@ def retrieve_from_db(query, collection):
         n_results=2
     )
 
-    return results["documents"][0]
+    return results["documents"][0], results["metadatas"][0]
 
 def ask_llm(context, question):
     prompt = f"""
@@ -189,14 +199,27 @@ Question:
     return data["response"]
 
 #主程序
-document_text = load_all_documents("documents")
-chunks = split_text(document_text)
+documents = load_all_documents("documents")
+all_chunks = []
+
+for doc in documents:
+
+    chunks = split_text(doc["text"])
+
+    for chunk in chunks:
+
+        all_chunks.append(
+            {
+                "text": chunk,
+                "source": doc["source"]
+            }
+        )
 
 query = input("Ask a question: ")
 
-collection = build_vector_db(chunks)
+collection = build_vector_db(all_chunks)
 
-top_chunks = retrieve_from_db(query, collection)
+top_chunks, top_metadatas = retrieve_from_db(query, collection)
 
 context = "\n".join(top_chunks)
 
@@ -207,5 +230,5 @@ print(answer)
 
 print("\n===== Sources =====")
 
-for i, chunk in enumerate(top_chunks):
-    print(f"[{i+1}] {chunk}")
+for i, metadata in enumerate(top_metadatas):
+    print(f"[{i+1}] {metadata['source']}")
