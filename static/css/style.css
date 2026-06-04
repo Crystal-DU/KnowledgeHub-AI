@@ -1,0 +1,142 @@
+body {
+    background: linear-gradient(
+        135deg,
+        #f7f5ff 0%,
+        #f8fbff 100%
+    );
+    color: #1f2937;
+}
+
+.app-header {
+    background: white;
+    border-radius: 20px;
+    padding: 24px 28px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+}
+
+.brand-icon {
+    width: 50px;
+    height: 50px;
+
+    border-radius: 14px;
+
+    background: linear-gradient(
+        135deg,
+        #6d5dfc,
+        #7c3aed
+    );
+
+    color: white;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    font-size: 24px;
+}
+
+.custom-card {
+    border: none !important;
+
+    border-radius: 20px !important;
+
+    box-shadow:
+        0 8px 24px rgba(
+            0,
+            0,
+            0,
+            0.06
+        ) !important;
+}
+
+.upload-box {
+    border: 2px dashed #c4b5fd;
+
+    border-radius: 18px;
+
+    padding: 30px;
+
+    text-align: center;
+
+    background: #fbfaff;
+}
+
+.btn-purple {
+    background: linear-gradient(
+        135deg,
+        #6d5dfc,
+        #7c3aed
+    );
+
+    color: white;
+
+    border: none;
+
+    border-radius: 12px;
+}
+
+.btn-purple:hover {
+    color: white;
+    opacity: 0.9;
+}
+
+.empty-state {
+    min-height: 300px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    text-align: center;
+}
+
+.upload-box {
+    border: 2px dashed #c4b5fd;
+    border-radius: 18px;
+    padding: 36px 24px;
+    text-align: center;
+    background: #fbfaff;
+    cursor: pointer;
+    display: block;
+    transition: all 0.2s ease;
+}
+
+.upload-box:hover {
+    background: #f3efff;
+    border-color: #7c3aed;
+}
+
+.upload-icon {
+    font-size: 42px;
+    color: #6d5dfc;
+}
+
+.file-input {
+    display: none;
+}
+
+.empty-icon {
+    font-size: 56px;
+    color: #c4b5fd;
+}
+
+.uploaded-file-item {
+    margin-top: 10px;
+    padding: 12px 14px;
+
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+
+    background: white;
+
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.file-icon {
+    color: #6d5dfc;
+    font-size: 20px;
+}

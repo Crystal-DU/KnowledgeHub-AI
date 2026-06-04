@@ -1,61 +1,234 @@
+{% load static %}
+
 <!DOCTYPE html>
 <html>
 <head>
     <title>KnowledgeHub AI</title>
+
+    <!-- Bootstrap CSS -->
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+        rel="stylesheet"
+    >
+
+    <!-- CSS -->
+    <link
+        rel="stylesheet"
+        href="{% static 'css/style.css' %}"
+    >
+
+    <!-- Bootstrap Icons -->
+    <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"
+    >
 </head>
+
 <body>
 
-    <h1>KnowledgeHub AI</h1>
+    <!-- 页面容器 -->
+    <div class="container py-5">
 
-    <p>Ask questions about your documents.</p>
-    <form method="post" enctype="multipart/form-data">
-        {% csrf_token %}
+        <!-- 顶部标题区域 -->
+        <div class="app-header mb-4">
 
-        <div>
-            <label>Upload document</label>
-            <input type="file" name="document">
+            <div class="d-flex align-items-center gap-3">
+                <div class="brand-icon">
+                    <i class="bi bi-book"></i>
+                </div>
+            
+            <div>
+                <h1 class="fw-bold mb-1">
+                    KnowledgeHub AI
+                </h1>
+
+                <p class="text-muted mb-0">
+                    Your Intelligent Document Assistant
+                </p>
+
+            </div>
+
         </div>
 
-        <br>
-    
-        <div>
-            <label>Question</label>
-            <input
-            type="text"
-            name="question"
-            placeholder="Ask a question..."
-            style="width:500px"
-            >
-        </div>
+        <!-- Bootstrap 一行分两列：左边上传文件，右边问答 -->
+        <div class="row g-4">
 
-        <br>
+            <!-- 左侧区域 -->
+            <div class="col-md-4">
 
-        <button type="submit">Ask AI</button>
-    </form>
-{% if answer %}
-    <hr>
+                <!-- 上传文件卡片 -->
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-body">
 
-    <h2>Answer</h2>
-    <p>{{ answer }}</p>
+                        <h4 class="card-title mb-3">
+                            Upload Document
+                        </h4>
 
-    <h2>Sources</h2>
+                        <p class="text-muted small">
+                            Upload a PDF, Excel, PowerPoint or TXT file.
+                        </p>
 
-    <ul>
-        {% for source in sources %}
-            <li>
-                {{ source.source }}
+                        <!-- form 开始：上传文件 + 输入问题都在这个 form 里 -->
+                        <form method="post" enctype="multipart/form-data">
+                            {% csrf_token %}
 
-                {% if source.page %}
-                    - Page {{ source.page }}
-                {% elif source.sheet %}
-                    - Sheet: {{ source.sheet }}
-                {% elif source.slide %}
-                    - Slide {{ source.slide }}
+                            <div class="mb-3">
+
+                                <label class="upload-box">
+                                    <i class="bi bi-cloud-arrow-up upload-icon"></i>
+
+                                    <div class="fw-semibold mt-3">
+                                        Upload your document
+                                    </div>
+
+                                    <div class="text-muted small mt-1">
+                                        PDF, Excel, PowerPoint or TXT
+                                    </div>
+
+                                    <input
+                                        type="file"
+                                        name="document"
+                                        class="file-input"
+                                    >
+                                </label>
+                            {% if uploaded_files %}
+                                <div class="mt-4">
+                                    <h6 class="fw-bold">
+                                        Uploaded Files ({{ uploaded_files|length }})
+                                    </h6>
+                                {% for file in uploaded_files %}
+                                    <div class="uploaded-file-item">
+                                        <i class="bi bi-file-earmark-text file-icon"></i>
+                                        <span>
+                                            {{ file }}
+                                        </span>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                    </div>
+                </div>
+
+                <!-- 提示卡片 -->
+                <div class="card shadow-sm border-0">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            Privacy Note
+                        </h5>
+
+                        <p class="text-muted small mb-0">
+                            Files are processed locally in this project environment.
+                        </p>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- 右侧区域 -->
+            <div class="col-md-8">
+
+                <!-- 问题输入卡片 -->
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-body">
+
+                        <h4 class="card-title mb-3">
+                            Ask a Question
+                        </h4>
+
+                        <div class="mb-3">
+                            <input
+                                class="form-control form-control-lg"
+                                type="text"
+                                name="question"
+                                placeholder="Ask a question about your document..."
+                            >
+                        </div>
+
+                        <button class="btn btn-primary px-4">
+                            Ask AI
+                        </button>
+
+                        <!-- form 结束 -->
+                        </form>
+
+                    </div>
+                </div>
+
+                <!-- 如果有 answer，就显示回答卡片 -->
+                {% if answer %}
+                    <div class="card custom-card mb-4">
+                        <div class="card-body">
+
+                            <h4 class="card-title mb-3">
+                                <i class="bi bi-stars text-primary me-2"></i>
+                                Answer
+                            </h4>
+
+                            <p class="mb-0">
+                                {{ answer }}
+                            </p>
+
+                        </div>
+                    </div>
+
+                    <!-- Sources 卡片 -->
+                    <div class="card custom-card">
+                        <div class="card-body">
+
+                            <h4 class="card-title mb-3">
+                                <i class="bi bi-journal-text text-primary me-2"></i>
+                                Sources
+                            </h4>
+
+                            <ul class="list-group list-group-flush">
+                                {% for source in sources %}
+                                    <li class="list-group-item px-0">
+                                        <strong>{{ source.source }}</strong>
+
+                                        {% if source.page %}
+                                            <span class="badge text-bg-primary ms-2">
+                                                Page {{ source.page }}
+                                            </span>
+                                        {% elif source.sheet %}
+                                            <span class="badge text-bg-success ms-2">
+                                                Sheet: {{ source.sheet }}
+                                            </span>
+                                        {% elif source.slide %}
+                                            <span class="badge text-bg-warning ms-2">
+                                                Slide {{ source.slide }}
+                                            </span>
+                                        {% endif %}
+                                    </li>
+                                {% endfor %}
+                            </ul>
+
+                        </div>
+                    </div>
+
+                <!-- 如果还没有回答，就显示空状态 -->
+                {% else %}
+                    <div class="card custom-card">
+                        <div class="card-body empty-state">
+
+                            <div>
+                                <i class="bi bi-chat-square-text empty-icon"></i>
+                                <h4 class="text-muted mt-3">
+                                    Your answer will appear here
+                                </h4>
+
+                                <p class="text-muted mb-0">
+                                    Upload a document and ask a question to get started.
+                                </p>
+                            </div>
+
+                        </div>
+                    </div>
                 {% endif %}
-            </li>
-        {% endfor %}
-    </ul>
-{% endif %}
+
+            </div>
+        </div>
+    </div>
 
 </body>
 </html>

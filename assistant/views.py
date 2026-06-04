@@ -9,6 +9,7 @@ from rag import ask_question
 def home(request):
     answer = None
     sources = []
+    unique_sources = []
     question = None
     uploaded_file_name = None
 
@@ -49,6 +50,11 @@ def home(request):
                 if source not in unique_sources:
                     unique_sources.append(source)
 
+    upload_dir = os.path.join(settings.BASE_DIR, "uploads")
+    uploaded_files = []
+    if os.path.exists(upload_dir):
+        uploaded_files = os.listdir(upload_dir)
+
     return render(
         request,
         "assistant/home.html",
@@ -56,6 +62,7 @@ def home(request):
             "question": question,
             "answer": answer,
             "sources": unique_sources,
-            "uploaded_file_name": uploaded_file_name
+            "uploaded_file_name": uploaded_file_name,
+            "uploaded_files": uploaded_files,
         }
     )
