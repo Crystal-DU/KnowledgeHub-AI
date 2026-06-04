@@ -8,27 +8,54 @@
     <h1>KnowledgeHub AI</h1>
 
     <p>Ask questions about your documents.</p>
-
-    <form method="post">
+    <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
 
-        <input
+        <div>
+            <label>Upload document</label>
+            <input type="file" name="document">
+        </div>
+
+        <br>
+    
+        <div>
+            <label>Question</label>
+            <input
             type="text"
             name="question"
             placeholder="Ask a question..."
             style="width:500px"
-        >
+            >
+        </div>
 
-        <button type="submit">
-            Ask
-        </button>
+        <br>
 
+        <button type="submit">Ask AI</button>
     </form>
-    {% if answer %}
+{% if answer %}
     <hr>
+
     <h2>Answer</h2>
     <p>{{ answer }}</p>
-    {% endif %}
+
+    <h2>Sources</h2>
+
+    <ul>
+        {% for source in sources %}
+            <li>
+                {{ source.source }}
+
+                {% if source.page %}
+                    - Page {{ source.page }}
+                {% elif source.sheet %}
+                    - Sheet: {{ source.sheet }}
+                {% elif source.slide %}
+                    - Slide {{ source.slide }}
+                {% endif %}
+            </li>
+        {% endfor %}
+    </ul>
+{% endif %}
 
 </body>
 </html>

@@ -261,9 +261,9 @@ Question:
     data = response.json()
     return data["response"]
 
-def ask_question(query):
+def ask_question(query, folder_path):
     # 1. 从 documents 文件夹读取所有文档
-    documents = load_all_documents("documents")
+    documents = load_all_documents(folder_path)
 
     # 2. 准备一个列表，用来保存所有 chunk
     all_chunks = []
